@@ -1,0 +1,16 @@
+symbol: XAUUSD
+source: replace-with-data-vendor
+timeframe: 15m
+source_timezone: UTC
+timestamp_convention: open
+price_basis: unknown
+volume_type: tick
+calendar_policy: weekdays
+column_mapping:
+  timestamp: timestamp
+  open: open
+  high: high
+  low: low
+  close: close
+  volume: volume
+
