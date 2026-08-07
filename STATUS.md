@@ -6,6 +6,8 @@
 
 Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 
+该 pilot 是长期 Phase 3 `Research Knowledge Base` 的准备性验证，并产生首批可审计 registry/artifacts；不表示完整知识库能力已经完成。
+
 ## 已完成
 
 - 建立 `src/aiquantlab` package 布局和指定的研究目录。
@@ -34,6 +36,8 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 - 使用 non-overlapping event sampling；没有优化 horizon、condition 或统计参数。
 - 两项 registry run 均完成，全部 artifact checksum 已复核。
 - 生成 `reports/phase3_xauusd_pilot.md`，没有生成 buy/sell signal 或策略。
+- 明确 AIQuantLab 的长期定位为 AI-assisted quantitative research laboratory，而不是价格预测器或 EA。
+- 在 README 中记录 Research Findings、Strategy Research、Tick-first Data Architecture、validation 和 MT5 execution 的职责边界。
 
 ## 验证结果
 
@@ -58,6 +62,10 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 - 默认 baseline 是所有 eligible observations，包含 event observations；统计报告必须披露这一点。
 - Phase 3 pilot 的样本窗口、event、horizon、bootstrap 和 seed 均在运行前固定。
 - Pilot 结果只能用于验证 workflow，不能升级为候选策略或市场规律。
+- Research first、evidence first、validation before deployment 是长期项目原则。
+- Research Finding 与 Strategy Definition 必须分层保存；一个 finding 可以产生多个独立策略候选。
+- 长期数据架构以不可变 Tick Data 为 single source of truth，timeframe bar 属于可重建的 processed artifact。
+- AIQuantLab 是 research and validation platform；MT5 EA 是最终 execution layer。
 
 ## 待完成
 
@@ -68,6 +76,10 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 - 添加参考执行模型、accounting、交易成本和风险指标。
 - 添加 Walk-forward validation、参数敏感性、bootstrap robustness validation（区别于当前统计置信区间）和 Cross-asset validation。
 - 使用独立时期和报价源复核数据语义后，再考虑扩大描述性研究范围。
+- 完善 Research Knowledge Base 的跨实验索引、finding 归并、检索和长期结论管理。
+- 实现 Tick Data ingestion、Bar Aggregation Engine 和可配置的 M1/M5/M15/H1/H4/D1 生成流程。
+- 在研究证据充分后建设 Strategy Research Framework；当前不得提前生成策略。
+- 完成 Backtesting、Walk-forward Validation、Paper Trading 后，才评估 MT5 EA Integration。
 
 ## 已知问题与限制
 
@@ -80,6 +92,20 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 - Moving-block bootstrap 只能部分缓解重叠 event window 和时间序列依赖。
 - Bootstrap confidence interval 当前不重采样 baseline uncertainty，baseline mean 被视为固定值。
 - 多 horizon 样本可能因数据尾部没有完整 forward window 而具有不同样本量。
+- Tick-first 是长期架构原则；当前 package 尚未实现完整 tick ingestion、bar aggregation 或 tick replay。
+
+## 长期 Roadmap
+
+| Phase | 能力 | 状态 |
+| --- | --- | --- |
+| Phase 0 | Architecture and Data Foundation | 已完成基础实现 |
+| Phase 1 | Data Validation and Processing | 已完成基础实现，provider calendar 等仍待完善 |
+| Phase 2 | Research Experiment Framework | 已完成基础实现 |
+| Phase 3 | Research Knowledge Base | 已有 registry 和 artifacts 基础，完整知识管理待建设 |
+| Phase 4 | Strategy Research Framework | 未开始 |
+| Phase 5 | Backtesting and Validation | 未开始 |
+| Phase 6 | Paper Trading | 未开始 |
+| Phase 7 | MT5 EA Integration | 未开始 |
 
 ## 实验结果
 
