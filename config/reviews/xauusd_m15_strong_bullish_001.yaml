@@ -1,0 +1,37 @@
+statistical_report_sha256: 7592c4f88df7afea733ba02e879516fc684ed1010377554c80aef1c34c6f7291
+conclusion: not_supported
+conclusion_notes: >-
+  The fixed 2015 research sample contained 2,786 selected non-overlapping events.
+  The four-bar conditional mean was -0.00280% versus a -0.00172% baseline,
+  for -0.00108% excess. The 95% moving-block bootstrap interval
+  [-0.00851%, 0.00586%] includes zero, q=0.618, and standardized effect=-0.00575.
+  This does not support the predeclared positive-continuation hypothesis.
+
+finding:
+  finding_id: FND-XAUUSD-M15-STRONG-BULLISH-001
+  title: No supported four-bar continuation after strong bullish XAUUSD M15 candles
+  status: rejected
+  market_behavior_claim: >-
+    The fixed 2015 HistData sample does not support positive four-bar midpoint
+    continuation after a bullish XAUUSD M15 candle with body/range at least 0.5.
+  evidence_summary: >-
+    Among 2,786 non-overlapping events, conditional mean return was -0.00280%,
+    baseline mean was -0.00172%, excess mean was -0.00108%, its 95% interval
+    crossed zero, adjusted q-value was 0.618, and standardized effect was -0.00575.
+  limitations:
+    - One historical quote source and one 2015 market regime were studied.
+    - The unconditional baseline includes event observations.
+    - Baseline uncertainty is not resampled by the bootstrap implementation.
+    - Moving blocks only partially address time-series dependence.
+    - Midpoint event returns do not include spread, slippage, or execution timing.
+  economic_rationale: >-
+    A large bullish candle could plausibly continue or mean-revert, but this fixed
+    sample provides no reliable evidence for the predeclared continuation direction.
+  explicit_non_claims:
+    - This finding is not an entry signal or a trading strategy.
+    - The negative point estimate is not evidence of a profitable short strategy.
+    - This result does not generalize to another provider, period, or timeframe.
+  human_reviewer_notes: >-
+    Reviewed against the predeclared direction, confidence interval, q-value, sample
+    size, and effect size. The hypothesis is retained as not supported. The fixed long
+    rule may be executed only as a pipeline probe and cannot qualify as validated.

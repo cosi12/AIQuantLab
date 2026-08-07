@@ -14,7 +14,6 @@ from aiquantlab.research.conditions import evaluate_event_definition, required_c
 from aiquantlab.research.exceptions import ResearchContractError
 from aiquantlab.research.models import EventOverlapPolicy, EventStudySpecification, ReturnType
 
-
 OBSERVATION_COLUMNS = (
     "event_timestamp",
     "horizon_bars",

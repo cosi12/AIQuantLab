@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -20,7 +20,6 @@ from aiquantlab.features.models import (
     FeatureSpec,
 )
 from aiquantlab.features.registry import FeatureRegistry
-
 
 FEATURE_VALID_COLUMN = "features_valid"
 
@@ -138,7 +137,7 @@ def materialize_features(
             validity_column=FEATURE_VALID_COLUMN,
             code_version=code_version,
             warm_up_bars=bundle.warm_up_bars,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         temporary_manifest.write_text(
             manifest.model_dump_json(indent=2),

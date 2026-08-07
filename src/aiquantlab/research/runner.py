@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from aiquantlab.data.quality import ValidationOptions, validate_ohlcv
 from aiquantlab.data.storage import file_sha256
+from aiquantlab.features.models import FeatureManifest
 from aiquantlab.research.event_study import EventStudyResult, run_event_study
 from aiquantlab.research.exceptions import ResearchContractError
 from aiquantlab.research.models import ExperimentConfig, StatisticalReport
@@ -34,6 +35,10 @@ class ExperimentArtifactManifest(BaseModel):
     selected_event_count: int
     eligible_observation_count: int
     artifact_sha256: dict[str, str]
+    feature_manifest_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
     created_at: datetime
 
 
@@ -76,6 +81,37 @@ def _load_verified_frame(
         raise ResearchContractError(
             f"experiment dataset failed OHLCV validation: {error_codes}"
         )
+    if config.feature_dataset is not None:
+        manifest_path = Path(config.feature_dataset.manifest_path)
+        if not manifest_path.is_absolute():
+            manifest_path = working_directory / manifest_path
+        if not manifest_path.is_file():
+            raise FileNotFoundError(manifest_path)
+        if file_sha256(manifest_path) != config.feature_dataset.manifest_sha256:
+            raise ResearchContractError("feature manifest checksum does not match configuration")
+        manifest = FeatureManifest.model_validate_json(
+            manifest_path.read_text(encoding="utf-8")
+        )
+        reference = config.feature_dataset
+        if manifest.output_sha256 != config.dataset.sha256:
+            raise ResearchContractError("feature manifest does not identify the experiment dataset")
+        if manifest.feature_bundle_sha256 != reference.feature_bundle_sha256:
+            raise ResearchContractError("feature bundle checksum does not match configuration")
+        if manifest.source_ohlcv_sha256 != reference.source_ohlcv_sha256:
+            raise ResearchContractError("feature source checksum does not match configuration")
+        if manifest.validity_column != reference.validity_column:
+            raise ResearchContractError("feature validity column does not match configuration")
+        if reference.validity_column not in frame:
+            raise ResearchContractError("feature validity column is missing from dataset")
+        frame = frame.loc[frame[reference.validity_column].fillna(False).astype(bool)]
+
+    if config.dataset.sample_start is not None and config.dataset.sample_end is not None:
+        start = pd.Timestamp(config.dataset.sample_start).tz_convert("UTC")
+        end = pd.Timestamp(config.dataset.sample_end).tz_convert("UTC")
+        frame = frame.loc[(frame["timestamp"] >= start) & (frame["timestamp"] < end)]
+        if frame.empty:
+            raise ResearchContractError("experiment sample window contains no observations")
+        frame = frame.reset_index(drop=True)
     return frame
 
 
@@ -123,15 +159,26 @@ def run_experiment(
         event_result.baseline.to_parquet(baseline_path, index=False, engine="pyarrow")
         report_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
 
+        feature_manifest_path: Path | None = None
+        if config.feature_dataset is not None:
+            configured_manifest = Path(config.feature_dataset.manifest_path)
+            if not configured_manifest.is_absolute():
+                configured_manifest = base_directory / configured_manifest
+            feature_manifest_path = temporary_directory / "feature_manifest.json"
+            shutil.copyfile(configured_manifest, feature_manifest_path)
+
+        artifact_paths = [
+            config_path,
+            hypothesis_path,
+            observations_path,
+            baseline_path,
+            report_path,
+        ]
+        if feature_manifest_path is not None:
+            artifact_paths.append(feature_manifest_path)
         artifacts = {
             path.name: file_sha256(path)
-            for path in (
-                config_path,
-                hypothesis_path,
-                observations_path,
-                baseline_path,
-                report_path,
-            )
+            for path in artifact_paths
         }
         manifest = ExperimentArtifactManifest(
             run_id=started_run.run_id,
@@ -145,7 +192,12 @@ def run_experiment(
             selected_event_count=event_result.selected_event_count,
             eligible_observation_count=event_result.eligible_observation_count,
             artifact_sha256=artifacts,
-            created_at=datetime.now(timezone.utc),
+            feature_manifest_sha256=(
+                config.feature_dataset.manifest_sha256
+                if config.feature_dataset is not None
+                else None
+            ),
+            created_at=datetime.now(UTC),
         )
         (temporary_directory / "run_manifest.json").write_text(
             manifest.model_dump_json(indent=2), encoding="utf-8"

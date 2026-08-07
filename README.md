@@ -27,7 +27,7 @@ Validation before deployment.
 
 ## Current Scope（当前范围）
 
-当前里程碑已经实现数据基础设施和 research experiment framework（研究实验框架）：
+当前里程碑已经实现从 Tick 数据到研究结论、策略探针和时间样本外验证报告的首个完整纵向切片：
 
 - 严格的 OHLCV 和 Data provenance（数据来源与处理溯源）契约
 - CSV 列映射和 UTC 时间戳标准化
@@ -40,8 +40,13 @@ Validation before deployment.
 - Event study（事件研究），测量 forward return、最大上行/下行幅度和首次正/负收益所需 bar 数
 - 使用 deterministic bootstrap、confidence interval 和 Benjamini-Hochberg 多重检验调整的统计报告
 - 固定 dataset checksum、配置 fingerprint、随机种子和代码版本的不可变实验产物
+- 严格校验排序、UTC 与 bid/ask 关系的 Tick Parquet 到 M15 聚合，并保留执行价格列
+- 两个最小 causal price-structure features、feature bundle fingerprint 和物化 manifest
+- 人工审阅门槛、不可变 Research Finding 与跨 finding JSON index
+- 完整策略候选契约、next-bar-open bid/ask 参考执行模型和交易成本指标
+- 固定 research / validation / final-test 时段的时间顺序验证与压力滑点报告
 
-Feature engineering（特征工程）、trading strategy（交易策略）、Backtesting（回测）、optimization（优化）和全历史数据处理目前尚未实现。
+当前实现是验证架构边界的最小纵向切片，不是通用策略平台。Multi-timeframe alignment、参数敏感性、滚动 walk-forward、bootstrap robustness、cross-asset validation、完整 Tick ingestion/tick replay、optimization 和 paper trading 仍未实现。
 
 ## Architecture（架构）
 
@@ -241,7 +246,19 @@ Event horizon 的单位是 bar，不是自然时间。默认 unconditional basel
 
 固定小样本的首个端到端验证记录见 [Phase 3 XAUUSD pilot](reports/phase3_xauusd_pilot.md)。该报告仅验证研究 workflow，不包含策略、信号或参数优化。
 
-## Future Strategy Research Layer
+## First Complete XAUUSD Pipeline
+
+固定配置 `config/pipelines/xauusd_m15_first.yaml` 使用 2015–2017 HistData bid/ask Tick 数据运行首个完整纵向切片：2015 research、2016 validation、2017 final test。运行方式：
+
+```powershell
+python scripts/run_xauusd_research_pipeline.py
+```
+
+脚本会校验并聚合 Tick、物化因果特征、运行 Event Study、应用人工 review、发布 finding、冻结策略定义，并生成含 primary/stress 成本场景的 validation report。生成数据与不可变 artifacts 默认留在 Git 之外；固定配置、人工 review 和结果摘要进入版本控制。
+
+本次预声明的 strong-bullish continuation 假设没有通过 research gate。系统保留 rejected finding，并将预声明 long rule 仅作为 `pipeline_probe` 执行，以验证回测与报告链路；它不能被解释为通过验证的策略。结果见 [first complete XAUUSD pipeline report](reports/xauusd_m15_first_pipeline.md)。
+
+## Strategy Research Layer
 
 Strategy Research Layer 只接收经过审阅的 Research Findings，其职责是：
 
@@ -261,7 +278,7 @@ Strategy Research Layer 只接收经过审阅的 Research Findings，其职责�
 - Position sizing
 - Risk management rules
 
-每个策略候选必须独立评估。Research Finding 本身不能直接下单，当前项目也尚未实现该层。
+每个策略候选必须独立评估。Research Finding 本身不能直接下单。当前仅实现一条受限纵向切片：接受的 finding 可以生成 qualification candidate；rejected finding 只能生成明确标记、永远不能获得 qualifying assessment 的 pipeline probe。通用候选生成、比较和选择仍未实现。
 
 ## Validation Philosophy（验证哲学）
 
@@ -273,6 +290,8 @@ Strategy Research Layer 只接收经过审阅的 Research Findings，其职责�
 - Bootstrap Analysis
 - Cross-market / Cross-asset Validation
 - Paper Trading
+
+当前已实现固定的 research / validation / final-test chronological split、observed bid/ask spread、显式 slippage stress 和基础收益/回撤指标。它不等同于完整 rolling walk-forward、参数敏感性或跨资产验证。
 
 系统需要主动检测和限制：
 

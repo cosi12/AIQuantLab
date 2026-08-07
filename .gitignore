@@ -19,3 +19,4 @@ experiments/*
 reports/*
 !reports/.gitkeep
 !reports/phase3_xauusd_pilot.md
+!reports/xauusd_m15_first_pipeline.md

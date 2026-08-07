@@ -1,8 +1,10 @@
 # Phase 4 设计：Causal Feature & Research Findings Layer
 
 日期：2026-08-07  
-状态：设计稿（未实现）  
+状态：核心因果特征与最小 finding promotion 已实现；MTF alignment 仍未实现
 依据：`README.md`、`STATUS.md`、现有 `src/aiquantlab` 研究契约
+
+> 2026-08-07 实现说明：`aiquantlab.features`、feature-conditioned experiment integrity chain 和最小 `FindingRegistry` 已按本设计落地。后续 milestone 另行加入了受限 strategy/backtest/chronological-validation 纵向切片；rejected finding 仅允许产生不可获得 qualifying assessment 的 `pipeline_probe`，不改变本设计中 Research Finding 与 Strategy 的责任边界。
 
 ## 1. 定位
 

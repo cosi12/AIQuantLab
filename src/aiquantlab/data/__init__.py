@@ -28,8 +28,18 @@ from aiquantlab.data.storage import (
     read_processed_dataset,
     write_processed_dataset,
 )
+from aiquantlab.data.ticks import (
+    EXECUTION_PRICE_COLUMNS,
+    TICK_COLUMNS,
+    TickAggregationResult,
+    TickSourceIdentity,
+    aggregate_tick_parquet_files,
+    tick_source_fingerprint,
+)
 
 __all__ = [
+    "EXECUTION_PRICE_COLUMNS",
+    "TICK_COLUMNS",
     "CalendarPolicy",
     "CandleTimestampConvention",
     "ColumnMapping",
@@ -40,15 +50,19 @@ __all__ = [
     "IngestionResult",
     "PriceBasis",
     "QualityIssue",
+    "TickAggregationResult",
+    "TickSourceIdentity",
     "Timeframe",
     "ValidationOptions",
     "VolumeType",
+    "aggregate_tick_parquet_files",
     "find_missing_timestamps",
     "ingest_csv",
     "load_data_source_config",
     "load_market_csv",
-    "resample_ohlcv",
     "read_processed_dataset",
+    "resample_ohlcv",
+    "tick_source_fingerprint",
     "validate_ohlcv",
     "write_processed_dataset",
 ]

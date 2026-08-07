@@ -14,6 +14,7 @@ from aiquantlab.research.models import (
     EventStudySpecification,
     ExpectedDirection,
     ExperimentConfig,
+    FeatureDatasetReference,
     HypothesisDefinition,
     ReturnType,
     StatisticalReport,
@@ -42,6 +43,7 @@ __all__ = [
     "ExperimentConfig",
     "ExperimentRegistry",
     "ExperimentRunResult",
+    "FeatureDatasetReference",
     "HypothesisDefinition",
     "ReturnType",
     "RunStatus",
@@ -54,4 +56,3 @@ __all__ = [
     "run_experiment",
     "write_experiment_config",
 ]
-

@@ -4,9 +4,9 @@
 
 ## 当前里程碑
 
-Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
+首个完整 XAUUSD research-to-validation 纵向切片。
 
-该 pilot 是长期 Phase 3 `Research Knowledge Base` 的准备性验证，并产生首批可审计 registry/artifacts；不表示完整知识库能力已经完成。
+固定使用 2015–2017 HistData bid/ask Tick：2015 research、2016 validation、2017 final test。里程碑目标是验证 evidence → finding → candidate → backtest → validation 的契约，而不是产生盈利策略。首个假设和 probe 均被正确拒绝。
 
 ## 已完成
 
@@ -27,7 +27,7 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 - 添加持久化 experiment registry，记录配置 fingerprint、dataset checksum、运行状态和人工结论。
 - 添加不可变运行目录，保存 resolved config、hypothesis、observations、baseline、statistical report 和 manifest。
 - 强制完整实验从 checksum 匹配的 Parquet 文件加载，并记录 frame fingerprint 和 code version。
-- 添加完整实验 runner；未添加任何交易策略、订单规则或 Backtesting 逻辑。
+- 添加完整实验 runner，并保持 Event Study 与交易执行逻辑分层。
 - 检查本地 `XAUUSD_M5.csv` 的 schema、时间范围、重复、排序、价格、volume 和 spread。
 - 固定使用 2026-07-13 至 2026-07-24 的两周样本，没有搜索或选择有利区间。
 - 通过 ingestion pipeline 处理 2,760 根 M5，并 resample 为 920 根 M15。
@@ -38,14 +38,22 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 - 生成 `reports/phase3_xauusd_pilot.md`，没有生成 buy/sell signal 或策略。
 - 明确 AIQuantLab 的长期定位为 AI-assisted quantitative research laboratory，而不是价格预测器或 EA。
 - 在 README 中记录 Research Findings、Strategy Research、Tick-first Data Architecture、validation 和 MT5 execution 的职责边界。
+- 添加严格 Tick Parquet 校验与 midpoint M15 聚合，保留 bid/ask OHLC 和 spread 执行列。
+- 聚合 76,443,318 条 Tick 为 70,879 根 M15；原始 36 个文件以 source-tree SHA-256 固定。
+- 添加 causal feature contract、registry、warm-up、物化 manifest 与 experiment integrity chain。
+- 添加人工 finding promotion gate、不可变 finding artifact 和 JSON index；失败 finding 同样保留。
+- 添加 immutable strategy candidate contract 和 `pipeline_probe` / qualification 研究门槛。
+- 添加 next-bar-open bid/ask 参考执行模型、fixed-fraction accounting、spread/slippage cost 和回撤指标。
+- 添加冻结 candidate 的 research / validation / final-test chronological validation 与逐笔交易账本。
+- 生成 `reports/xauusd_m15_first_pipeline.md` 以及 checksum-verified validation artifacts。
 
 ## 验证结果
 
-- `python -m pytest`：29 项测试通过。
-- `python -m pytest --cov=aiquantlab --cov-report=term-missing`：总覆盖率 91%。
+- `python -m pytest`：45 项测试通过。
+- `python -m pytest --cov=aiquantlab --cov-report=term-missing`：总覆盖率 90%。
 - `python -m compileall -q src tests`：通过。
 - 在忽略当前环境缺失的第三方 type stubs（类型存根）后，严格项目类型检查未发现内部问题；`pandas-stubs` 和 `types-PyYAML` 已声明在开发依赖中。
-- Ruff 已声明为开发依赖，但当前解释器中尚未安装，因此本轮未运行 Ruff。
+- `ruff check src tests scripts`：通过（使用项目声明的 `ruff>=0.6,<1` 范围）。
 
 ## 重要决策
 
@@ -66,19 +74,22 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 - Research Finding 与 Strategy Definition 必须分层保存；一个 finding 可以产生多个独立策略候选。
 - 长期数据架构以不可变 Tick Data 为 single source of truth，timeframe bar 属于可重建的 processed artifact。
 - AIQuantLab 是 research and validation platform；MT5 EA 是最终 execution layer。
+- 参考执行语义固定为 signal bar 完全收盘后计算、下一 observed bar open 成交；long 支付 ask entry / bid exit。
+- 初版禁用 stop loss / take profit，避免 bar 数据无法判定同 bar intrabar 触发顺序。
+- 未通过 research gate 的 finding 只能产生 `pipeline_probe`，validation assessment 强制不得 qualifying。
+- Final-test 结果不得用于修改同一 candidate revision。
 
 ## 待完成
 
 - 为选定的执行环境锁定依赖版本。
 - 添加供应商特定的交易日历和节假日支持。
-- 添加 causal feature（因果特征）接口、registry、warm-up metadata 和特征测试。
 - 添加只使用已收盘高时间周期 K 线的 multi-timeframe alignment（多时间框架对齐）。
-- 添加参考执行模型、accounting、交易成本和风险指标。
-- 添加 Walk-forward validation、参数敏感性、bootstrap robustness validation（区别于当前统计置信区间）和 Cross-asset validation。
+- 扩展参考执行模型的 broker contract、financing、latency、market impact 和经验证的 intrabar/tick replay 语义。
+- 添加滚动 Walk-forward validation、参数敏感性、bootstrap robustness validation（区别于当前统计置信区间）和 Cross-asset validation。
 - 使用独立时期和报价源复核数据语义后，再考虑扩大描述性研究范围。
-- 完善 Research Knowledge Base 的跨实验索引、finding 归并、检索和长期结论管理。
-- 实现 Tick Data ingestion、Bar Aggregation Engine 和可配置的 M1/M5/M15/H1/H4/D1 生成流程。
-- 在研究证据充分后建设 Strategy Research Framework；当前不得提前生成策略。
+- 完善 Research Knowledge Base 的 finding 归并、结构化查询、replication link 和长期结论管理。
+- 将当前 Parquet-to-M15 聚合扩展为完整 Tick ingestion、通用 M1/M5/M15/H1/H4/D1 generation 和 tick replay。
+- 在获得 accepted finding 后扩展通用 Strategy Research Framework；当前 rejected finding 只能产生 pipeline probe。
 - 完成 Backtesting、Walk-forward Validation、Paper Trading 后，才评估 MT5 EA Integration。
 
 ## 已知问题与限制
@@ -86,13 +97,13 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 - 通用 weekday calendar 不知道 XAUUSD 的每日维护时段或经纪商节假日。
 - OHLC K 线无法确定同一根 K 线内止损和止盈触发的先后顺序。
 - Tick volume 不是集中式实际成交量，不得按实际成交量解释。
-- 缺少 bid/ask 数据会限制 spread 和 execution-cost simulation（执行成本模拟）的精度。
+- 首个 HistData pipeline 有 bid/ask 报价，但 latency、market impact、rejected fills、swap 与 broker sizing 仍未建模。
 - 在完成兼容性和语义评估前，`vectorbt` 不会作为 core dependency（核心依赖）。
 - JSON experiment registry 采用 atomic replacement，但当前只支持 single-process workflow，没有跨进程文件锁。
 - Moving-block bootstrap 只能部分缓解重叠 event window 和时间序列依赖。
 - Bootstrap confidence interval 当前不重采样 baseline uncertainty，baseline mean 被视为固定值。
 - 多 horizon 样本可能因数据尾部没有完整 forward window 而具有不同样本量。
-- Tick-first 是长期架构原则；当前 package 尚未实现完整 tick ingestion、bar aggregation 或 tick replay。
+- Tick-first 仍是长期架构原则；当前仅实现已规范化 Tick Parquet 到单一 timeframe 的聚合，尚无完整 ingestion、通用 aggregation 或 tick replay。
 
 ## 长期 Roadmap
 
@@ -101,9 +112,9 @@ Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 | Phase 0 | Architecture and Data Foundation | 已完成基础实现 |
 | Phase 1 | Data Validation and Processing | 已完成基础实现，provider calendar 等仍待完善 |
 | Phase 2 | Research Experiment Framework | 已完成基础实现 |
-| Phase 3 | Research Knowledge Base | 已有 registry 和 artifacts 基础，完整知识管理待建设 |
-| Phase 4 | Strategy Research Framework | 未开始 |
-| Phase 5 | Backtesting and Validation | 未开始 |
+| Phase 3 | Research Knowledge Base | 最小 finding promotion/index 已实现，完整知识管理待建设 |
+| Phase 4 | Strategy Research Framework | 已有单候选纵向切片；通用生成/比较未实现 |
+| Phase 5 | Backtesting and Validation | 已有参考执行与固定 chronological splits；完整 validation suite 未实现 |
 | Phase 6 | Paper Trading | 未开始 |
 | Phase 7 | MT5 EA Integration | 未开始 |
 
@@ -118,3 +129,14 @@ Phase 3 使用固定两周 XAUUSD M15 小样本完成两项描述性实验：
 - 两项结论均为 `inconclusive`。
 
 这些结果只验证 ingestion、event study、registry 和 statistical reporting。没有形成交易策略，也不能视为稳健市场证据。详细记录见 `reports/phase3_xauusd_pilot.md`。
+
+### First complete XAUUSD pipeline
+
+- 固定研究事件：fully closed bullish M15 candle 且 `body_ratio >= 0.5`；horizon 固定为 4 observed bars。
+- 2015 research 有 2,786 个 non-overlapping events；conditional mean `-0.00280%`，baseline `-0.00172%`，excess `-0.00108%`。
+- 95% excess-mean CI 为 `[-0.00851%, 0.00586%]`，adjusted q-value `0.618`，结论为 `not_supported`。
+- Finding `FND-XAUUSD-M15-STRONG-BULLISH-001` 以 `rejected` 发布并保留全部限制和 non-claims。
+- 预声明 long rule 只以 `pipeline_probe` 运行：research / validation / final-test 分别 3,159 / 3,193 / 3,214 笔 primary trades。
+- Primary mean/trade 分别为 `-0.0329%` / `-0.0268%` / `-0.0267%`；三个 split 均违反正 expectancy 与 25% drawdown 门槛。
+- 添加 1 bp/side adverse slippage 后结果进一步恶化；最终 assessment 为 `not_supported`。
+- 该结果证明 rejection、成本建模、样本隔离和不可变报告链路有效，不证明任何市场或策略优势。详见 `reports/xauusd_m15_first_pipeline.md`。

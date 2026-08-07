@@ -15,7 +15,6 @@ from aiquantlab.research.models import (
     EventDefinition,
 )
 
-
 _OPERATORS: dict[ConditionOperator, Callable[[pd.Series, object], pd.Series]] = {
     ConditionOperator.GREATER_THAN: lambda left, right: left > right,
     ConditionOperator.GREATER_THAN_OR_EQUAL: lambda left, right: left >= right,

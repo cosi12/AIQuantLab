@@ -8,13 +8,15 @@ from aiquantlab.data.exceptions import DataContractError
 from aiquantlab.data.models import Timeframe
 from aiquantlab.data.schema import OHLCV_COLUMNS
 
+ZERO_OFFSET = pd.Timedelta(0)
+
 
 def resample_ohlcv(
     frame: pd.DataFrame,
     *,
     source_timeframe: Timeframe,
     target_timeframe: Timeframe,
-    anchor_offset: pd.Timedelta = pd.Timedelta(0),
+    anchor_offset: pd.Timedelta = ZERO_OFFSET,
     drop_boundary_partial: bool = True,
 ) -> pd.DataFrame:
     """Aggregate open-timestamped bars to a larger, epoch-anchored timeframe."""
@@ -75,4 +77,3 @@ def resample_ohlcv(
 
     result.index.name = "timestamp"
     return result.reset_index().loc[:, list(OHLCV_COLUMNS)]
-

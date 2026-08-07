@@ -26,6 +26,30 @@ def test_processed_dataset_round_trip_with_integrity_check(canonical_frame, tmp_
     assert loaded_manifest.metadata.symbol == "XAUUSD"
 
 
+def test_processed_dataset_preserves_declared_execution_columns(canonical_frame, tmp_path) -> None:
+    output = tmp_path / "xauusd-execution.parquet"
+    frame = canonical_frame.assign(
+        bid_open=canonical_frame["open"] - 0.1,
+        ask_open=canonical_frame["open"] + 0.1,
+    )
+    report = validate_ohlcv(frame, ValidationOptions(timeframe=Timeframe.M15))
+    manifest = write_processed_dataset(
+        frame,
+        output,
+        metadata=DatasetMetadata(
+            symbol="XAUUSD",
+            source="test-vendor",
+            timeframe=Timeframe.M15,
+        ),
+        quality_report=report,
+    )
+
+    loaded, _ = read_processed_dataset(output)
+
+    assert loaded.equals(frame)
+    assert manifest.columns == tuple(frame.columns)
+
+
 def test_processed_dataset_detects_changed_file(canonical_frame, tmp_path) -> None:
     output = tmp_path / "xauusd-15m.parquet"
     report = validate_ohlcv(canonical_frame, ValidationOptions(timeframe=Timeframe.M15))
@@ -60,4 +84,3 @@ def test_invalid_dataset_is_not_persisted(canonical_frame, tmp_path) -> None:
         )
 
     assert not output.exists()
-

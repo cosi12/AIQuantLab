@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
+from aiquantlab.research.event_study import run_event_study
 from aiquantlab.research.exceptions import ResearchContractError
 from aiquantlab.research.models import EventOverlapPolicy
-from aiquantlab.research.event_study import run_event_study
 
 
 def test_event_study_measures_forward_behavior_without_trade_semantics(

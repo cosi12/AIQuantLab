@@ -19,10 +19,11 @@ from aiquantlab.data.schema import OHLCV_COLUMNS
 class DatasetManifest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: int = 1
+    schema_version: int = 2
     data_file: str
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     row_count: int = Field(ge=0)
+    columns: tuple[str, ...] = ()
     metadata: DatasetMetadata
     quality_report: DataQualityReport
     created_at: datetime = Field(default_factory=lambda: datetime.now().astimezone())
@@ -73,7 +74,7 @@ def write_processed_dataset(
     temporary_manifest = sidecar_path.with_name(f".{sidecar_path.name}.{token}.tmp")
 
     try:
-        frame.loc[:, list(OHLCV_COLUMNS)].to_parquet(
+        frame.to_parquet(
             temporary_data,
             index=False,
             engine="pyarrow",
@@ -82,6 +83,7 @@ def write_processed_dataset(
             data_file=output_path.name,
             sha256=file_sha256(temporary_data),
             row_count=len(frame),
+            columns=tuple(str(column) for column in frame.columns),
             metadata=metadata,
             quality_report=quality_report,
         )
@@ -123,5 +125,6 @@ def read_processed_dataset(
         raise DatasetIntegrityError(f"processed dataset is missing columns: {missing_columns}")
     if len(frame) != manifest.row_count:
         raise DatasetIntegrityError("processed dataset row count does not match its manifest")
-    return frame.loc[:, list(OHLCV_COLUMNS)], manifest
-
+    if manifest.columns and tuple(str(column) for column in frame.columns) != manifest.columns:
+        raise DatasetIntegrityError("processed dataset columns do not match its manifest")
+    return frame, manifest

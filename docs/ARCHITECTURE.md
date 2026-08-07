@@ -137,7 +137,7 @@ Paper Trading / Simulation Account    (future)
 Execution Systems such as MT5 EA      (future)
 ```
 
-标注 `(future)` 的阶段属于长期架构设计，**当前尚未实现**。
+标注 `(future)` 的阶段仍属于长期完整能力。当前已有一条受限的 strategy/backtest/chronological-validation 纵向切片，用于验证端到端契约；它不表示通用阶段能力已经完成。
 
 ### 4.2 各阶段责任
 
@@ -146,10 +146,10 @@ Execution Systems such as MT5 EA      (future)
 | Market Data | 保存可追溯、不可变的原始市场数据 | 基础实现 |
 | Data Validation and Normalization | 统一 schema、时区和时间周期，暴露数据缺陷 | 基础实现 |
 | Research Experiments | 用可证伪 hypothesis 和 Event Study 测量市场行为 | 基础实现 |
-| Research Findings Knowledge Base | 把已审阅的实验证据归并为可检索的长期 finding | 未实现；其依赖的 experiment registry 与不可变产物已具备（见第 7 节） |
-| Strategy Hypothesis Generation | 从已验证 finding 提出多个可比较的策略方向 | 未开始 |
-| Strategy Development | 将候选方向转换为完整、明确、可执行的规则 | 未开始 |
-| Backtesting and Validation | 在成本与执行假设明确的条件下模拟策略行为，并检查 out-of-sample 稳定性与参数敏感性 | 未开始 |
+| Research Findings Knowledge Base | 把已审阅的实验证据归并为可检索的长期 finding | 最小 promotion gate、immutable finding 与 JSON index 已实现；完整检索/归并待建设 |
+| Strategy Hypothesis Generation | 从已验证 finding 提出多个可比较的策略方向 | 仅有固定单候选纵向切片；通用生成/比较未实现 |
+| Strategy Development | 将候选方向转换为完整、明确、可执行的规则 | 最小 immutable candidate contract 已实现 |
+| Backtesting and Validation | 在成本与执行假设明确的条件下模拟策略行为，并检查 out-of-sample 稳定性与参数敏感性 | next-open bid/ask 参考引擎与固定 chronological splits 已实现；完整 walk-forward/敏感性未实现 |
 | Paper Trading / Simulation Account | 在 simulation account 中验证实时数据和执行流程 | 未开始 |
 | Execution Systems such as MT5 EA | 实现最终批准的 execution contract | 未开始 |
 
@@ -165,11 +165,16 @@ MT5 EA 是**未来的** execution layer，它不承担发现研究规律或选�
 
 ```text
 src/aiquantlab/
-├── data/         # ingestion、validation、resampling、storage
-└── research/     # hypothesis、event condition、event study、statistics、registry、runner
+├── data/         # ingestion、validation、tick aggregation、resampling、storage
+├── features/     # causal feature contracts、registry、materialization
+├── research/     # hypothesis、event condition、event study、statistics、registry、runner
+├── findings/     # human-reviewed promotion gate 与 immutable index
+├── strategies/   # immutable candidate contracts
+├── backtest/     # next-bar-open bid/ask reference engine
+└── validation/   # frozen chronological split plans and reports
 ```
 
-顶层的 `features/`、`research/`、`strategies/`、`backtest/`、`validation/` 目录用于保存研究规范与产物，当前仅有占位文件。Notebook 必须调用 package API，不能成为核心逻辑的唯一实现位置。
+顶层的 `features/`、`research/`、`strategies/`、`backtest/`、`validation/` 目录用于保存研究规范与产物；可执行逻辑只位于 package。Notebook 必须调用 package API，不能成为核心逻辑的唯一实现位置。
 
 ---
 
@@ -219,13 +224,23 @@ src/aiquantlab/
 - 持久化 experiment registry：config fingerprint、dataset checksum、运行状态、人工结论
 - 不可变实验产物：resolved config、hypothesis、observations、baseline、statistical report、run manifest
 
-### 6.3 尚未实现
+### 6.3 首个完整纵向切片
+
+- HistData bid/ask Tick Parquet 严格校验与 M15 midpoint/execution-bar 聚合
+- Causal price-structure feature bundle 与 feature-conditioned experiment integrity chain
+- Human-reviewed finding promotion gate 和 immutable finding index
+- Immutable strategy candidate、next-bar-open bid/ask execution、固定持有期
+- 2015 research / 2016 validation / 2017 final-test chronological report
+
+首个 finding 被正确标记为 `rejected`；对应 long rule 仅以 `pipeline_probe` 验证链路，最终 assessment 为 `not_supported`。这证明流程会保留失败证据，不证明策略能力。
+
+### 6.4 尚未实现
 
 以下能力**当前不存在**，不要根据本 README 假设它们可用：
 
-Feature engineering、multi-timeframe alignment、trading strategy、backtesting、walk-forward validation、optimization、tick ingestion、bar aggregation engine、tick replay、跨实验 finding 索引、全历史数据处理。
+Multi-timeframe alignment、通用 strategy generation、滚动 walk-forward、参数敏感性、bootstrap robustness、cross-asset validation、optimization、完整 tick ingestion、通用多周期 bar aggregation、tick replay 和 paper trading。
 
-### 6.4 安装
+### 6.5 安装
 
 需要 Python 3.11 或更高版本：
 

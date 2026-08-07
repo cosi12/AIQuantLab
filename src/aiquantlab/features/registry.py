@@ -15,7 +15,6 @@ from aiquantlab.features.models import (
 )
 from aiquantlab.features.transforms import body_ratio, is_bullish_candle
 
-
 FeatureTransform = Callable[[pd.DataFrame, FeatureSpec], pd.Series]
 
 

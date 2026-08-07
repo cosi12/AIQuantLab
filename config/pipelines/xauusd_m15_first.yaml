@@ -1,0 +1,47 @@
+pipeline_id: XAUUSD-M15-FIRST-001
+symbol: XAUUSD
+timeframe: 15m
+
+source:
+  directory: data/raw/ticks/XAUUSD_HISTDATA_2015_2017_PARQUET
+  pattern: "**/*.parquet"
+  provider: HistData.com Kaggle mirror
+
+processed_dataset: data/processed/xauusd_histdata_2015_2017_m15.parquet
+feature_dataset: data/processed/xauusd_histdata_2015_2017_m15_price_structure_v1.parquet
+
+splits:
+  research:
+    start: "2015-01-01T00:00:00Z"
+    end: "2016-01-01T00:00:00Z"
+  validation:
+    start: "2016-01-01T00:00:00Z"
+    end: "2017-01-01T00:00:00Z"
+  final_test:
+    start: "2017-01-01T00:00:00Z"
+    end: "2018-01-01T00:00:00Z"
+
+research:
+  experiment_id: XAUUSD-M15-STRONG-BULLISH-001
+  revision: 1
+  body_ratio_threshold: 0.5
+  horizon_bars: 4
+  bootstrap_samples: 2000
+  block_size: 16
+  random_seed: 20260807
+  minimum_sample_size: 100
+
+review: config/reviews/xauusd_m15_strong_bullish_001.yaml
+
+strategy:
+  candidate_id: XAUUSD-M15-STRONG-BULLISH-LONG-001
+  revision: 1
+  direction: long
+  holding_bars: 4
+  notional_fraction: 1.0
+
+validation:
+  minimum_trades_per_evaluation_split: 100
+  maximum_drawdown_limit: 0.25
+  primary_slippage_bps_per_side: 0.0
+  stress_slippage_bps_per_side: 1.0

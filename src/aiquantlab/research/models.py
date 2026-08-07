@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime
 from enum import StrEnum
 from typing import Self
 
@@ -69,11 +70,36 @@ class DatasetReference(BaseModel):
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     symbol: str = Field(min_length=1)
     timeframe: Timeframe
+    sample_start: datetime | None = None
+    sample_end: datetime | None = None
 
     @field_validator("symbol")
     @classmethod
     def normalize_symbol(cls, value: str) -> str:
         return value.strip().upper()
+
+    @model_validator(mode="after")
+    def sample_window_must_be_valid(self) -> Self:
+        if (self.sample_start is None) != (self.sample_end is None):
+            raise ValueError("sample_start and sample_end must be provided together")
+        if self.sample_start is not None and self.sample_end is not None:
+            if self.sample_start.tzinfo is None or self.sample_end.tzinfo is None:
+                raise ValueError("sample boundaries must be timezone-aware")
+            if self.sample_start >= self.sample_end:
+                raise ValueError("sample_start must precede sample_end")
+        return self
+
+
+class FeatureDatasetReference(BaseModel):
+    """Integrity chain from a materialized feature dataset to canonical OHLCV."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    manifest_path: str = Field(min_length=1)
+    manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    feature_bundle_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_ohlcv_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    validity_column: str = Field(min_length=1)
 
 
 class EventCondition(BaseModel):
@@ -153,6 +179,7 @@ class ExperimentConfig(BaseModel):
     title: str = Field(min_length=3)
     hypothesis: HypothesisDefinition
     dataset: DatasetReference
+    feature_dataset: FeatureDatasetReference | None = None
     event_study: EventStudySpecification
     statistics: StatisticalSpecification = Field(default_factory=StatisticalSpecification)
     tags: tuple[str, ...] = ()

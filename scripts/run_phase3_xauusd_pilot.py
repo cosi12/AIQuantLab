@@ -27,7 +27,6 @@ from aiquantlab.research import (
     run_experiment,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RAW_PATH = PROJECT_ROOT / "data/raw/XAUUSD_M5.csv"
 SOURCE_CONFIG_PATH = PROJECT_ROOT / "config/pilots/xauusd_m5_small.yaml"
