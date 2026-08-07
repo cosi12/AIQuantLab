@@ -1,0 +1,49 @@
+schema_version: 1
+experiment_id: PHASE3-XAUUSD-BULLISH-001
+revision: 1
+title: Phase 3 XAUUSD bullish M15 candle behavior
+hypothesis:
+  statement: In the fixed pilot sample, bullish M15 candles have positive excess forward returns.
+  rationale: This descriptive test measures short-horizon continuation or reversion after an up candle.
+  null_hypothesis: Conditional mean forward return equals the unconditional baseline mean.
+  alternative_hypothesis: Conditional mean forward return is greater than the baseline mean.
+  expected_direction: positive
+  falsification_criteria:
+    - Excess-return confidence intervals include zero across all declared horizons.
+    - Benjamini-Hochberg adjusted q-values do not reject the null across all horizons.
+dataset:
+  path: data/processed/xauusd_m15_phase3_pilot.parquet
+  sha256: "78bee01b0ad9075fb76b9ae3f2a56a83b0d94d9c0c7851a9021238f74743b133"
+  symbol: XAUUSD
+  timeframe: 15m
+event_study:
+  event:
+    name: bullish_m15_candle
+    description: The current M15 candle closes above its open.
+    combination: all
+    conditions:
+      - left_column: close
+        operator: gt
+        right_column: open
+        left_lag_bars: 0
+        right_lag_bars: 0
+  eligibility: null
+  price_column: close
+  high_column: high
+  low_column: low
+  horizons_bars: [1, 4, 16]
+  return_type: simple
+  overlap_policy: non_overlapping
+statistics:
+  confidence_level: 0.95
+  bootstrap_method: moving_block
+  bootstrap_samples: 2000
+  block_size: 5
+  random_seed: 20260807
+  minimum_sample_size: 30
+tags:
+  - phase3-pilot
+  - descriptive
+  - xauusd
+  - m15
+

@@ -4,7 +4,7 @@
 
 ## 当前里程碑
 
-Phase 2：research experiment framework（研究实验框架）。
+Phase 3：固定 XAUUSD 小样本的 research workflow 验证。
 
 ## 已完成
 
@@ -26,6 +26,14 @@ Phase 2：research experiment framework（研究实验框架）。
 - 添加不可变运行目录，保存 resolved config、hypothesis、observations、baseline、statistical report 和 manifest。
 - 强制完整实验从 checksum 匹配的 Parquet 文件加载，并记录 frame fingerprint 和 code version。
 - 添加完整实验 runner；未添加任何交易策略、订单规则或 Backtesting 逻辑。
+- 检查本地 `XAUUSD_M5.csv` 的 schema、时间范围、重复、排序、价格、volume 和 spread。
+- 固定使用 2026-07-13 至 2026-07-24 的两周样本，没有搜索或选择有利区间。
+- 通过 ingestion pipeline 处理 2,760 根 M5，并 resample 为 920 根 M15。
+- 保留 9 次每日 session gap，不填充、不插值；M15 quality report 记录 36 个 warning。
+- 运行 bullish candle 和 bearish candle 两项描述性 Event study，horizon 固定为 1/4/16 bars。
+- 使用 non-overlapping event sampling；没有优化 horizon、condition 或统计参数。
+- 两项 registry run 均完成，全部 artifact checksum 已复核。
+- 生成 `reports/phase3_xauusd_pilot.md`，没有生成 buy/sell signal 或策略。
 
 ## 验证结果
 
@@ -48,6 +56,8 @@ Phase 2：research experiment framework（研究实验框架）。
 - 完整实验必须固定 dataset checksum、配置 fingerprint、随机种子和 code version。
 - Experiment registry 将运行状态与研究结论分离；框架不自动认定 hypothesis supported。
 - 默认 baseline 是所有 eligible observations，包含 event observations；统计报告必须披露这一点。
+- Phase 3 pilot 的样本窗口、event、horizon、bootstrap 和 seed 均在运行前固定。
+- Pilot 结果只能用于验证 workflow，不能升级为候选策略或市场规律。
 
 ## 待完成
 
@@ -57,7 +67,7 @@ Phase 2：research experiment framework（研究实验框架）。
 - 添加只使用已收盘高时间周期 K 线的 multi-timeframe alignment（多时间框架对齐）。
 - 添加参考执行模型、accounting、交易成本和风险指标。
 - 添加 Walk-forward validation、参数敏感性、bootstrap robustness validation（区别于当前统计置信区间）和 Cross-asset validation。
-- 使用小型、经过检查的 XAUUSD 样本对框架进行试运行。
+- 使用独立时期和报价源复核数据语义后，再考虑扩大描述性研究范围。
 
 ## 已知问题与限制
 
@@ -73,4 +83,12 @@ Phase 2：research experiment framework（研究实验框架）。
 
 ## 实验结果
 
-尚未使用真实市场数据测试任何 hypothesis，也未创建任何交易策略。当前测试仅使用合成数据验证研究框架，不能视为市场证据。
+Phase 3 使用固定两周 XAUUSD M15 小样本完成两项描述性实验：
+
+- `PHASE3-XAUUSD-BULLISH-001`：451 个 raw events，52 个 non-overlapping events。
+- `PHASE3-XAUUSD-BEARISH-001`：467 个 raw events，52 个 non-overlapping events。
+- 六个 horizon 结果的 excess-return confidence interval 均跨越 0。
+- 六个 Benjamini-Hochberg adjusted q-value 均高于 0.05。
+- 两项结论均为 `inconclusive`。
+
+这些结果只验证 ingestion、event study、registry 和 statistical reporting。没有形成交易策略，也不能视为稳健市场证据。详细记录见 `reports/phase3_xauusd_pilot.md`。

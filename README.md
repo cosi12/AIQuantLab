@@ -123,6 +123,8 @@ print(result.statistical_report.model_dump_json(indent=2))
 
 Event horizon 的单位是 bar，不是自然时间。默认 unconditional baseline 包含 event observations；bootstrap confidence interval 目前将 baseline mean 视为固定值。上述限制会写入统计报告 warning，不能在解释结果时忽略。
 
+固定小样本的首个端到端验证记录见 [Phase 3 XAUUSD pilot](reports/phase3_xauusd_pilot.md)。该报告仅验证研究 workflow，不包含策略、信号或参数优化。
+
 ## Research Guardrails（研究护栏）
 
 - Higher-timeframe features（高时间周期特征）只能使用已经完全收盘的 K 线。
