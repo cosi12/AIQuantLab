@@ -45,6 +45,7 @@ Validation before deployment.
 - 人工审阅门槛、不可变 Research Finding 与跨 finding JSON index
 - 完整策略候选契约、next-bar-open bid/ask 参考执行模型和交易成本指标
 - 固定 research / validation / final-test 时段的时间顺序验证与压力滑点报告
+- 只读 Web 研究界面：数据集、质量报告、实验证据、研究发现与策略候选的浏览器视图
 
 当前实现是验证架构边界的最小纵向切片，不是通用策略平台。Multi-timeframe alignment、参数敏感性、滚动 walk-forward、bootstrap robustness、cross-asset validation、完整 Tick ingestion/tick replay、optimization 和 paper trading 仍未实现。
 
@@ -215,6 +216,29 @@ write_processed_dataset(
 ```
 
 运行测试套件：`python -m pytest`。
+
+## Web Research Interface（Web 研究界面）
+
+Web 层是 artifact 的只读研究界面，不是交易终端，也不生成或执行任何订单。它直接读取 `data/processed`、`experiments` 和 `reports` 下的既有 artifact，不引入数据库，也不复制研究数据。架构边界见 [docs/WEB_ARCHITECTURE.md](docs/WEB_ARCHITECTURE.md)。
+
+启动后端（默认监听 `http://127.0.0.1:8000`，OpenAPI 文档在 `/docs`）：
+
+```powershell
+python -m pip install -e ".[web,dev]"
+python -m uvicorn aiquantlab_web.app:app --reload --app-dir web/backend
+```
+
+后端通过向上查找 `pyproject.toml` 定位仓库根目录；如需指向其他仓库，设置 `AIQUANTLAB_ROOT` 环境变量。
+
+启动前端（默认监听 `http://localhost:5173`，开发期由 Vite 代理 `/api` 到后端）：
+
+```powershell
+cd web/frontend
+npm install
+npm run dev
+```
+
+界面按研究流程分页：研究总览、数据集浏览与质量报告、实验浏览与统计证据、研究发现、策略候选与验证报告、研究报告查看器。被拒绝的实验、发现和候选一律保留可见，界面不会把它们呈现为可交易结论。
 
 ## Research Experiments（研究实验）
 

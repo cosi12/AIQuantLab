@@ -9,6 +9,11 @@ __pycache__/
 htmlcov/
 .ipynb_checkpoints/
 
+# Web frontend build output and dependencies.
+web/frontend/node_modules/
+web/frontend/dist/
+.playwright-mcp/
+
 # Market data and generated research artifacts are local by default.
 data/raw/*
 !data/raw/.gitkeep

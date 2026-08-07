@@ -8,6 +8,8 @@
 
 固定使用 2015–2017 HistData bid/ask Tick：2015 research、2016 validation、2017 final test。里程碑目标是验证 evidence → finding → candidate → backtest → validation 的契约，而不是产生盈利策略。首个假设和 probe 均被正确拒绝。
 
+在此之上叠加 Web Application v0.1：把上述 artifact 链条暴露为浏览器中的只读研究界面。Web 层不改变任何研究结论，也不新增数据来源。
+
 ## 已完成
 
 - 建立 `src/aiquantlab` package 布局和指定的研究目录。
@@ -46,14 +48,19 @@
 - 添加 next-bar-open bid/ask 参考执行模型、fixed-fraction accounting、spread/slippage cost 和回撤指标。
 - 添加冻结 candidate 的 research / validation / final-test chronological validation 与逐笔交易账本。
 - 生成 `reports/xauusd_m15_first_pipeline.md` 以及 checksum-verified validation artifacts。
+- 编写 `docs/WEB_ARCHITECTURE.md`，固定 Web 层的只读边界、API 契约与未来扩展点。
+- 添加 `web/backend` FastAPI 只读 artifact API：数据集、质量报告、按需 SHA-256 校验、K 线预览、实验证据、run artifact、研究发现、策略候选、验证报告与 Markdown 报告。
+- 添加 `web/frontend` React + Vite 中文研究界面：研究总览、数据集浏览与详情、数据质量报告、实验浏览与统计证据、研究发现、策略候选与验证报告、报告查看器、设置与未来能力占位页。
+- 为 Web 层添加基于合成 artifact 仓库的测试，覆盖路径白名单、双类 manifest 建模、statistical evidence 呈现、展示状态派生优先级与空仓库行为。
 
 ## 验证结果
 
-- `python -m pytest`：45 项测试通过。
+- `python -m pytest`：121 项测试通过（其中 Web 层 76 项）。
 - `python -m pytest --cov=aiquantlab --cov-report=term-missing`：总覆盖率 90%。
 - `python -m compileall -q src tests`：通过。
-- 在忽略当前环境缺失的第三方 type stubs（类型存根）后，严格项目类型检查未发现内部问题；`pandas-stubs` 和 `types-PyYAML` 已声明在开发依赖中。
-- `ruff check src tests scripts`：通过（使用项目声明的 `ruff>=0.6,<1` 范围）。
+- 严格项目类型检查在 Web 层未发现内部问题；`pandas-stubs` 现有版本对 `read_parquet(engine="pyarrow")` 的 overload 判定在 `src` 与 Web 层同样报错，属于既有 stub 兼容问题。
+- `ruff check src web tests`：通过。全角标点触发的 `RUF001`-`RUF003` 已在 `pyproject.toml` 中说明并关闭，因为中文文档与面向研究者的中文文案本应使用全角标点。
+- `npm run build`（`tsc --noEmit && vite build`）：通过。
 
 ## 重要决策
 
@@ -78,6 +85,10 @@
 - 初版禁用 stop loss / take profit，避免 bar 数据无法判定同 bar intrabar 触发顺序。
 - 未通过 research gate 的 finding 只能产生 `pipeline_probe`，validation assessment 强制不得 qualifying。
 - Final-test 结果不得用于修改同一 candidate revision。
+- Web 层与研究引擎分离：`web/` 只读取 artifact，不引入数据库，也不调用实验、回测或验证执行路径。
+- Web API 只暴露 GET 端点。这是架构约束而非暂缺功能；写入研究产物必须经由脚本与人工审阅路径。
+- Web 层对历史 artifact 采用宽松解析：字段缺失或 schema 变更时留空并标注"未记录"，不得因 schema 演进导致既有研究记录不可浏览。
+- 策略候选的展示状态是 Web 层唯一的派生语义，按 `pipeline_probe` → 来源发现被拒 → 缺少验证报告 → 验证结论的固定优先级判定，且必须同时展示判定依据。
 
 ## 待完成
 
@@ -91,6 +102,9 @@
 - 将当前 Parquet-to-M15 聚合扩展为完整 Tick ingestion、通用 M1/M5/M15/H1/H4/D1 generation 和 tick replay。
 - 在获得 accepted finding 后扩展通用 Strategy Research Framework；当前 rejected finding 只能产生 pipeline probe。
 - 完成 Backtesting、Walk-forward Validation、Paper Trading 后，才评估 MT5 EA Integration。
+- Web 层：在 artifact 规模变大后添加实验/发现的服务端筛选与分页；当前一次返回全量摘要。
+- Web 层：把 forward-return 分布与 equity curve 以图形呈现，并保留原始数值表格。
+- Web 层：在实现 AI Research Agent 与 Paper Trading 之前，先确定写入路径的审批与审计契约。
 
 ## 已知问题与限制
 
@@ -104,6 +118,10 @@
 - Bootstrap confidence interval 当前不重采样 baseline uncertainty，baseline mean 被视为固定值。
 - 多 horizon 样本可能因数据尾部没有完整 forward window 而具有不同样本量。
 - Tick-first 仍是长期架构原则；当前仅实现已规范化 Tick Parquet 到单一 timeframe 的聚合，尚无完整 ingestion、通用 aggregation 或 tick replay。
+- Web 后端没有认证与授权。它假定运行在本机或受信网络内，不应直接暴露到公网。
+- Web 后端的 artifact 索引使用进程内 mtime + size 缓存；artifact 被原地覆盖且 mtime 未变时不会刷新。
+- Web 后端的数据集完整性校验会读取整个 Parquet 文件，必须由用户显式触发，不随页面加载执行。
+- 实验 registry 记录的 `artifact_directory` 是生成时的绝对路径。Web 层优先按 `revision-<n>/<run_id>/` 约定结构定位 run；若目录结构被改动则该 run 的 artifact 不可浏览。
 
 ## 长期 Roadmap
 
@@ -117,6 +135,7 @@
 | Phase 5 | Backtesting and Validation | 已有参考执行与固定 chronological splits；完整 validation suite 未实现 |
 | Phase 6 | Paper Trading | 未开始 |
 | Phase 7 | MT5 EA Integration | 未开始 |
+| Web v0.1 | Research Platform Interface | 只读研究界面已实现；AI Research Agent 与 Execution Layer 仅为占位 |
 
 ## 实验结果
 
