@@ -1,0 +1,47 @@
+schema_version: 1
+experiment_id: XAUUSD-BULL-CANDLE-001
+revision: 1
+title: XAUUSD bullish candle forward-return example
+hypothesis:
+  statement: A bullish candle is followed by a positive conditional forward return.
+  rationale: This minimal event is intended to exercise the framework, not assert an edge.
+  null_hypothesis: Conditional mean forward return equals the unconditional baseline mean.
+  alternative_hypothesis: Conditional mean forward return is greater than the baseline mean.
+  expected_direction: positive
+  falsification_criteria:
+    - The confidence interval includes the baseline mean across the tested horizons.
+dataset:
+  path: data/processed/xauusd-15m.parquet
+  # Replace this placeholder with the exact SHA-256 of the processed Parquet file.
+  sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  symbol: XAUUSD
+  timeframe: 15m
+event_study:
+  event:
+    name: bullish_candle
+    description: The current candle closes above its open.
+    combination: all
+    conditions:
+      - left_column: close
+        operator: gt
+        right_column: open
+        left_lag_bars: 0
+        right_lag_bars: 0
+  eligibility: null
+  price_column: close
+  high_column: high
+  low_column: low
+  horizons_bars: [1, 4, 16]
+  return_type: simple
+  overlap_policy: allow
+statistics:
+  confidence_level: 0.95
+  bootstrap_method: moving_block
+  bootstrap_samples: 2000
+  block_size: 5
+  random_seed: 7
+  minimum_sample_size: 30
+tags:
+  - framework-example
+  - xauusd
+
